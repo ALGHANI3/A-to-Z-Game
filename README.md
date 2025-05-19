@@ -1,400 +1,582 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>A to Z Fun Catch - Learn with Urdu MP3</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        /* Custom styles can go here if needed, but prefer Tailwind utilities */
-        body {
-            font-family: 'Arial', sans-serif;
-        }
-        #gameArea {
-            position: relative;
-            width: 100%; /* Full width of its container */
-            height: 70vh; /* Adjusted height for better mobile viewing */
-            max-width: 800px; /* Max width for larger screens */
-            margin-left: auto; /* Center the game area */
-            margin-right: auto; /* Center the game area */
-            overflow: hidden;
-            background: linear-gradient(to bottom, #a0d8f1, #ffffff);
-            border: 2px solid #333;
-            border-radius: 8px; /* Added rounded corners */
-        }
-        .item {
-            position: absolute;
-            width: 60px; /* Slightly smaller items for mobile */
-            height: 60px;
-            cursor: pointer;
-            transition: transform 0.1s ease-out;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 5px; /* Increased padding */
-            text-align: center;
-            background-color: white; /* Added background for items */
-            border-radius: 8px; /* Rounded corners for items */
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2); /* Added subtle shadow */
-        }
-         /* Increase item size on larger screens */
-        @media (min-width: 768px) {
-            .item {
-                width: 80px;
-                height: 80px;
-                padding: 8px; /* Increased padding for larger screens */
-            }
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snake ABC Game - Stages & Themes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <style>
+    /* Basic reset and global styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        .item img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            pointer-events: none;
-            margin-bottom: 3px; /* Adjusted space */
-        }
-         @media (min-width: 768px) {
-            .item img {
-                 margin-bottom: 5px;
-            }
-         }
+    body {
+      font-family: 'Press Start 2P', cursive;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 10px;
+      text-align: center;
+      transition: background-color 0.5s ease; /* Theme transition */
+    }
 
-        .item .letter {
-            font-size: 1rem; /* Adjusted font size */
-            font-weight: bold;
-            color: #333;
-            background-color: rgba(255, 255, 255, 0.8); /* Temporary background for visibility */
-            padding: 0 2px; /* Add a little padding around the letter */
-            border-radius: 3px;
-        }
-         @media (min-width: 768px) {
-            .item .letter {
-                font-size: 1.2rem;
-            }
-         }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 15px;
+      text-shadow: 3px 3px #ff00ff;
+      color: #00ffff;
+    }
 
-        .correct {
-            border: 3px solid green;
-        }
-        .incorrect {
-            border: 3px solid red;
-        }
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 420px;
+      padding: 15px;
+      border-radius: 15px;
+      border: 3px solid #00ffff;
+      box-shadow: 0 0 20px #00ffff;
+      transition: background-color 0.5s ease; /* Theme transition */
+    }
 
-        /* Styles for screens (start, game, end) */
-        #startScreen, #gameScreen, #endScreen {
-             /* Ensure screens take full height to center content vertically */
-            min-height: calc(100vh - 64px); /* Adjust based on header/footer if any */
-            display: flex; /* Use flexbox for centering */
-            flex-direction: column; /* Stack content vertically */
-            align-items: center; /* Center horizontally */
-            justify-content: center; /* Center vertically */
-        }
+    .settings-panel {
+      background-color: rgba(0, 0, 0, 0.3);
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      width: 100%;
+    }
 
-         /* Hide screens by default, controlled by JS */
-        #gameScreen, #endScreen {
-            display: none;
-        }
-    </style>
+    .settings-panel h3 {
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      color: #00ffff; /* Cyan title for settings */
+    }
+
+    .settings-panel div {
+      margin-bottom: 10px;
+    }
+    .settings-panel div:last-child {
+      margin-bottom: 0;
+    }
+
+    .setting-btn {
+      font-family: 'Press Start 2P', cursive;
+      padding: 8px 12px;
+      font-size: 0.75rem;
+      margin: 3px;
+      cursor: pointer;
+      background-color: #444;
+      color: #fff;
+      border: 2px solid #666;
+      border-radius: 5px;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .setting-btn.active {
+      background-color: #00ffff; /* Cyan for active */
+      color: #0a0a23;
+      border-color: #00dddd;
+    }
+    .setting-btn:hover:not(.active) {
+      background-color: #555;
+    }
+
+
+    .controls, .score-board {
+      margin: 10px 0;
+      padding: 10px;
+      background-color: rgba(0, 0, 0, 0.5);
+      border-radius: 10px;
+      width: 100%;
+    }
+
+    .score-board p {
+      margin: 5px 0;
+      font-size: 0.9rem;
+    }
+
+    #gameCanvas {
+      border: 2px solid #00ffff;
+      border-radius: 8px;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1 / 1;
+      max-width: 400px;
+      display: block;
+      transition: background-color 0.5s ease; /* Theme transition */
+    }
+
+    button#startGameBtn, button#restartBtn { /* Target only main game buttons */
+      padding: 12px 20px;
+      font-size: 1rem;
+      font-weight: bold;
+      margin: 8px;
+      cursor: pointer;
+      background: linear-gradient(45deg, #ff00ff, #00ffff);
+      color: #0a0a23;
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 4px #990099;
+      transition: all 0.1s ease;
+    }
+
+    button#startGameBtn:active, button#restartBtn:active {
+      box-shadow: 0 2px #990099;
+      transform: translateY(2px);
+    }
+
+    button#startGameBtn:hover, button#restartBtn:hover {
+      filter: brightness(1.2);
+    }
+
+    button#restartBtn {
+      background: linear-gradient(45deg, #ff6600, #ffff00);
+      box-shadow: 0 4px #cc5200;
+    }
+    button#restartBtn:active {
+      box-shadow: 0 2px #cc5200;
+      transform: translateY(2px);
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+      button#startGameBtn, button#restartBtn {
+        font-size: 0.9rem;
+        padding: 10px 15px;
+      }
+      .score-board p {
+        font-size: 0.8rem;
+      }
+      .settings-panel h3 {
+        font-size: 0.8rem;
+      }
+      .setting-btn {
+        font-size: 0.7rem;
+        padding: 6px 10px;
+      }
+    }
+  </style>
 </head>
-<body class="bg-gradient-to-t from-blue-200 to-white text-center p-4 min-h-screen flex flex-col">
-    <h1 class="text-3xl font-bold mb-4">A to Z Fun Catch - Learn with Urdu MP3</h1>
+<body>
+  <h1>🐍 Snake ABC Hunter 🕹️</h1>
 
-    <div id="startScreen" class="flex flex-col items-center justify-center flex-grow">
-        <h2 class="text-2xl mb-4">Choose Difficulty</h2>
-        <div class="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
-            <button class="btn bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded shadow text-lg">Easy</button>
-            <button class="btn bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded shadow text-lg">Normal</button>
-            <button class="btn bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded shadow text-lg">Hard</button>
-        </div>
-        <p id="bestScoreDisplayStart" class="mt-4 text-gray-700 text-lg"></p>
-        <p class="mt-2 text-gray-700 text-base">Instructions: Catch the item that matches the displayed letter and word.</p>
+  <div class="game-container">
+    <div class="settings-panel">
+      <div>
+        <h3>Difficulty:</h3>
+        <button class="setting-btn difficulty-btn active" data-difficulty="normal">Normal</button>
+        <button class="setting-btn difficulty-btn" data-difficulty="easy">Easy</button>
+        <button class="setting-btn difficulty-btn" data-difficulty="hard">Hard</button>
+      </div>
+      <div>
+        <h3>Theme:</h3>
+        <button class="setting-btn theme-btn active" data-theme="default">Classic</button>
+        <button class="setting-btn theme-btn" data-theme="jungle">Jungle</button>
+        <button class="setting-btn theme-btn" data-theme="desert">Desert</button>
+      </div>
     </div>
 
-    <div id="gameScreen" class="hidden flex-grow">
-        <div id="wordDisplay" class="text-2xl font-semibold my-4 text-gray-800"></div>
-        <div id="imageDisplay" class="w-24 h-24 md:w-32 md:h-32 mx-auto my-4">
-            </div>
-        <div id="gameArea"></div>
-        <div id="scoreBoard" class="text-xl my-4 text-gray-700"></div>
-        <div id="timerDisplay" class="text-xl my-4 text-gray-700"></div>
+    <div class="controls">
+      <button id="startGameBtn" onclick="startGame()">Start Game</button>
     </div>
 
-    <div id="endScreen" class="hidden flex-col items-center justify-center flex-grow">
-        <h2 class="text-2xl mb-4">Game Over!</h2>
-        <p id="finalScore" class="text-xl mb-4 text-gray-800"></p>
-        <p id="bestScoreDisplayEnd" class="text-xl mb-4 text-gray-800"></p>
-        <button class="btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded shadow text-lg" onclick="location.reload()">Play Again</button>
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="score-board">
+      <p>Score: <span id="score">0</span></p>
+      <p>Best Score: <span id="best">0</span></p>
+      <button id="restartBtn" onclick="startGame()" style="display:none;">Try Again</button>
     </div>
+  </div>
 
-    <audio id="audioPlayer"></audio>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreDisplay = document.getElementById('score');
+    const bestDisplay = document.getElementById('best');
+    const restartBtn = document.getElementById('restartBtn');
+    const startGameBtn = document.getElementById('startGameBtn');
+    const gameContainer = document.querySelector('.game-container');
 
-    <script>
-        // Expanded items list for A-Z with actual images (using placeholder sounds for now)
-        const items = {
-            A: ['Apple', 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Red_Apple.jpg/1200px-Red_Apple.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'],
-            B: ['Ball', 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Soccerball.svg/1024px-Soccerball.svg.png', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'],
-            C: ['Cat', 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Cat03.jpg/1200px-Cat03.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'],
-            D: ['Dog', 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Collage_of_Nine_Dogs.jpg/1200px-Collage_of_Nine_Dogs.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3'],
-            E: ['Elephant', 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/African_Bush_Elephant.jpg/1200px-African_Bush_Elephant.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3'],
-            F: ['Fish', 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Light_sussex_hen_and_chick.jpg/1200px-Light_sussex_hen_and_chick.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3'], // Using Chicken as a placeholder for F for now
-            G: ['Grape', 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Table_grapes_on_branch.jpg/1200px-Table_grapes_on_branch.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3'],
-            H: ['House', 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Haus_Seestra%C3%9Fe_10_in_Prien.jpg/1200px-Haus_Seestra%C3%9Fe_10_in_Prien.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3'],
-            I: ['Ice Cream', 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Ice_cream_with_strawberry_sauce%2C_pistachios_and_mint.jpg/1200px-Ice_cream_with_strawberry_sauce%2C_pistachios_and_mint.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3'],
-            J: ['Jellyfish', 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Aurelia_aurita_with_two_shrimp.jpg/1200px-Aurelia_aurita_with_two_shrimp.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3'],
-            K: ['Kite', 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Red_Delta_Kite.jpg/1200px-Red_Delta_Kite.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'],
-            L: ['Lion', 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Lion_waiting_in_Namibia.jpg/1200px-Lion_waiting_in_Namibia.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'],
-            M: ['Monkey', 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Macaque_de_Berb%C3%A9rie_-_Barbary_macaque.jpg/1200px-Macaque_de_Berb%C3%A9rie_-_Barbary_macaque.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'],
-            N: ['Nest', 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Bird_nest_with_eggs_in_a_tree.jpg/1200px-Bird_nest_with_eggs_in_a_tree.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3'],
-            O: ['Orange', 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Oranges-Plateselber.jpg/1200px-Oranges-Plateselber.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3'],
-            P: ['Penguin', 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Emperor_Penguin_Manchot_empereur.jpg/1200px-Emperor_Penguin_Manchot_empereur.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3'],
-            Q: ['Queen', 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Queen_Elizabeth_II_in_Canada_1957.jpg/1200px-Queen_Elizabeth_II_in_Canada_1957.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3'], // Using Queen Elizabeth II as an example
-            R: ['Rabbit', 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Oryctolagus_cuniculus_cottontail_rabbit.jpg/1200px-Oryctolagus_cuniculus_cottontail_rabbit.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3'],
-            S: ['Sun', 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg/1200px-The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3'],
-            T: ['Tiger', 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Tigre_dans_la_jungle_-_Tiger_in_the_jungle_%285216515081%29.jpg/1200px-Tigre_dans_la_jungle_-_Tiger_in_the_jungle_%285216515081%29.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3'],
-            U: ['Umbrella', 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Umbrella_transparent_background.png/1024px-Umbrella_transparent_background.png', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'],
-            V: ['Violin', 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Violin_by_Antonio_Stradivari%2C_1721_-_Symphony_Hall%2C_Phoenix%2C_Arizona_-_DSC07621.JPG/1200px-Violin_by_Antonio_Stradivari%2C_1721_-_Symphony_Hall%2C_Arizona_-_DSC07621.JPG', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'],
-            W: ['Wolf', 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Kolm%C3%A5rden_Wolf.jpg/1200px-Kolm%C3%A5rden_Wolf.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'],
-            X: ['Xylophone', 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Xylophone_with_mallets.jpg/1200px-Xylophone_with_mallets.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3'],
-            Y: ['Yacht', 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Sailing_yacht_Adix_in_Falmouth_Harbour.jpg/1200px-Sailing_yacht_Adix_in_Falmouth_Harbour.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3'],
-            Z: ['Zebra', 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Zebra_Kenya_-_05.jpg/1200px-Zebra_Kenya_-_05.jpg', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3'],
-        };
+    // Game constants
+    const gridSize = 20;
+    let canvasSize = 400;
+    let tileCount;
 
-        let score = 0;
-        let mode = 'easy';
-        let currentLetterIndex = 0;
-        let gameInterval;
-        let itemFallIntervals = []; // To keep track of falling item intervals
-        const letters = Object.keys(items);
-        let maxLettersToPlay = 0;
-        let fallSpeed = 2; // Pixels per interval (Adjusted default speed)
-        let fallIntervalTime = 30; // Milliseconds per interval
+    // Game state variables
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    let letterIndex = 0;
+    let snake, food, dx, dy, score, bestScore, speed, gameLoopInterval, currentLetter;
+    let gameRunning = false;
+    let currentDifficulty = 'normal'; // Default difficulty
+    let currentTheme = 'default';     // Default theme
 
-        // Get DOM elements
-        const startScreen = document.getElementById('startScreen');
-        const gameScreen = document.getElementById('gameScreen');
-        const endScreen = document.getElementById('endScreen');
-        const wordDisplay = document.getElementById('wordDisplay');
-        const imageDisplay = document.getElementById('imageDisplay');
-        const gameArea = document.getElementById('gameArea');
-        const scoreBoard = document.getElementById('scoreBoard');
-        const timerDisplay = document.getElementById('timerDisplay');
-        const audioPlayer = document.getElementById('audioPlayer');
-        const finalScore = document.getElementById('finalScore');
-        const bestScoreDisplayStart = document.getElementById('bestScoreDisplayStart');
-        const bestScoreDisplayEnd = document.getElementById('bestScoreDisplayEnd');
-
-        const BEST_SCORE_STORAGE_KEY = 'aToZCatchBestScore';
-
-        // Function to get best score from local storage
-        function getBestScore() {
-            const bestScore = localStorage.getItem(BEST_SCORE_STORAGE_KEY);
-            return bestScore ? parseInt(bestScore, 10) : 0;
+    // Theme settings
+    const themeSettings = {
+        default: {
+            bodyBg: '#0a0a23',
+            containerBg: '#1c1c3c',
+            canvasBg: '#001f3f',
+            snakeHead: '#00ff00',
+            snakeBody: '#00cc00',
+            foodText: '#ffffff',
+            messageText: '#ffffff',
+            gameOverText: '#ff0000',
+            borderColor: '#00ffff',
+            h1Color: '#00ffff',
+            h1Shadow: '#ff00ff',
+            settingsTitleColor: '#00ffff',
+            activeButtonBg: '#00ffff',
+            activeButtonColor: '#0a0a23'
+        },
+        jungle: {
+            bodyBg: '#228B22',
+            containerBg: '#556B2F',
+            canvasBg: '#8FBC8F',
+            snakeHead: '#FFD700',
+            snakeBody: '#DAA520',
+            foodText: '#1A1A1A',
+            messageText: '#1A1A1A',
+            gameOverText: '#8B0000',
+            borderColor: '#32CD32',
+            h1Color: '#ADFF2F',
+            h1Shadow: '#228B22',
+            settingsTitleColor: '#ADFF2F',
+            activeButtonBg: '#ADFF2F',
+            activeButtonColor: '#228B22'
+        },
+        desert: {
+            bodyBg: '#F4A460',
+            containerBg: '#D2B48C',
+            canvasBg: '#DEB887',
+            snakeHead: '#8B4513',
+            snakeBody: '#A0522D',
+            foodText: '#000000',
+            messageText: '#000000',
+            gameOverText: '#8B0000',
+            borderColor: '#CD853F',
+            h1Color: '#8B4513',
+            h1Shadow: '#D2691E',
+            settingsTitleColor: '#8B4513',
+            activeButtonBg: '#8B4513',
+            activeButtonColor: '#FFFFFF'
         }
+    };
 
-        // Function to set best score in local storage
-        function setBestScore(newBestScore) {
-            localStorage.setItem(BEST_SCORE_STORAGE_KEY, newBestScore);
+    // Sound synthesis
+    let eatSynth, gameOverSynth;
+
+    function setupSounds() {
+        if (typeof Tone !== 'undefined') {
+            eatSynth = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.01, release: 0.1 } }).toDestination();
+            gameOverSynth = new Tone.MonoSynth({ oscillator: { type: 'fmsquare' }, envelope: { attack: 0.05, decay: 0.2, sustain: 0.1, release: 0.5 }, filterEnvelope: { attack: 0.05, decay: 0.1, sustain: 0.05, release: 0.2, baseFrequency: 300, octaves: 2 } }).toDestination();
+        } else {
+            console.warn("Tone.js not loaded.");
         }
+    }
 
-        // Display best score on start screen when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            displayBestScore();
-             // Display start screen initially (handled by CSS now, but good to keep for clarity if needed)
-            // startScreen.style.display = 'flex';
+    function applyTheme(themeName) {
+        const theme = themeSettings[themeName];
+        document.body.style.backgroundColor = theme.bodyBg;
+        gameContainer.style.backgroundColor = theme.containerBg;
+        gameContainer.style.borderColor = theme.borderColor;
+        gameContainer.style.boxShadow = `0 0 20px ${theme.borderColor}`;
+
+        document.querySelector('h1').style.color = theme.h1Color;
+        document.querySelector('h1').style.textShadow = `3px 3px ${theme.h1Shadow}`;
+        
+        document.querySelectorAll('.settings-panel h3').forEach(h3 => h3.style.color = theme.settingsTitleColor);
+        document.querySelectorAll('.setting-btn.active').forEach(btn => {
+            btn.style.backgroundColor = theme.activeButtonBg;
+            btn.style.color = theme.activeButtonColor;
         });
+        canvas.style.borderColor = theme.borderColor;
 
 
-        // Function to display the best score on both start and end screens
-        function displayBestScore() {
-            const bestScore = getBestScore();
-            bestScoreDisplayStart.textContent = `Best Score: ${bestScore}`;
-            bestScoreDisplayEnd.textContent = `Best Score: ${bestScore}`;
+        if (!gameRunning) {
+            resizeCanvas(); 
         }
+    }
 
-        function playAudio(url) {
-            audioPlayer.src = url;
-            audioPlayer.play();
-        }
 
-        // Add event listeners to difficulty buttons
-        document.querySelectorAll('.btn').forEach(button => {
-            button.addEventListener('click', function() {
-                startGame(this.textContent.toLowerCase());
+    window.onload = () => {
+        setupSounds();
+        loadBestScore();
+        applyTheme(currentTheme); 
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        setupSettingButtons();
+    };
+
+    function setupSettingButtons() {
+        // Difficulty buttons
+        document.querySelectorAll('.difficulty-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                if (gameRunning) return; 
+                currentDifficulty = button.dataset.difficulty; // Store selected difficulty
+                document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                applyTheme(currentTheme); 
             });
         });
 
-
-        function startGame(selectedMode) {
-            mode = selectedMode;
-            score = 0;
-            currentLetterIndex = 0;
-            itemFallIntervals = []; // Clear previous intervals
-
-            // Set game parameters based on difficulty
-            if (mode === 'easy') {
-                maxLettersToPlay = 5; // Play with first 5 letters
-                fallSpeed = 2;
-                fallIntervalTime = 30;
-            } else if (mode === 'normal') {
-                maxLettersToPlay = 10; // Play with first 10 letters
-                fallSpeed = 3;
-                fallIntervalTime = 25;
-            } else if (mode === 'hard') {
-                maxLettersToPlay = letters.length; // Play with all letters
-                fallSpeed = 4;
-                fallIntervalTime = 20;
-            }
-
-            startScreen.style.display = 'none';
-            gameScreen.style.display = 'flex'; // Show game screen
-            endScreen.style.display = 'none'; // Hide end screen
-
-            scoreBoard.textContent = `Score: ${score}`;
-            timerDisplay.textContent = `Time: --`; // Placeholder for timer
-
-            runGame();
-        }
-
-        function runGame() {
-            // Clear any existing items and their fall intervals
-            gameArea.innerHTML = '';
-            itemFallIntervals.forEach(clearInterval);
-            itemFallIntervals = [];
-
-            if (currentLetterIndex >= maxLettersToPlay) {
-                endGame();
-                return;
-            }
-
-            const currentLetter = letters[currentLetterIndex];
-            const [correctWord, correctImg, correctSound] = items[currentLetter];
-
-            wordDisplay.textContent = `${currentLetter} for ${correctWord}`;
-            imageDisplay.innerHTML = `<img src="${correctImg}" alt="${correctWord}" class="rounded-md shadow-md" onerror="this.onerror=null; this.src='https://placehold.co/80x80/CCCCCC/000000?text=Error';" />`; // Add error handling for images
-
-            const options = [[currentLetter, correctWord, correctImg, correctSound, true]]; // Added currentLetter to options
-
-            // Add incorrect options
-            while (options.length < 3) { // Always show 3 options
-                const randomLetter = letters[Math.floor(Math.random() * letters.length)];
-                const [word, img, mp3] = items[randomLetter];
-                 // Ensure the random word is not already in options and is not the correct word
-                if (!options.find(opt => opt[1] === word) && word !== correctWord) { // Check against word
-                    options.push([randomLetter, word, img, mp3, false]); // Added randomLetter
-                }
-            }
-
-            shuffle(options);
-
-            // Create and animate falling items
-            options.forEach(([letter, word, img, mp3, isCorrect]) => { // Destructure to get letter
-                const el = document.createElement('div');
-                el.className = `item bg-white rounded-md shadow-md`; // Removed flex/center classes from here
-                // Calculate random left position, ensuring item stays within bounds
-                const maxLeft = gameArea.offsetWidth - 60; // Use item width (60px)
-                el.style.left = `${Math.random() * maxLeft}px`;
-                el.style.top = '0px';
-                // Include both image and letter
-                el.innerHTML = `
-                    <img src="${img}" alt="${word}" title="${word}" class="rounded-md" onerror="this.onerror=null; this.src='https://placehold.co/60x60/CCCCCC/000000?text=Error';" /> <span class="letter">${letter}</span>
-                `;
-
-                gameArea.appendChild(el);
-
-                // Animate fall
-                const fallInterval = setInterval(() => {
-                    let top = parseInt(el.style.top, 10);
-                    top += fallSpeed;
-                    el.style.top = `${top}px`;
-
-                    // Remove item if it falls off the screen
-                    if (top > gameArea.offsetHeight) {
-                        clearInterval(fallInterval);
-                        el.remove();
-                        // Optional: Penalize for missing the correct item
-                        if (isCorrect) {
-                           // Handle miss penalty if desired
-                        }
-                    }
-                }, fallIntervalTime);
-                itemFallIntervals.push(fallInterval); // Store interval ID
-
-                // Click handler for the item
-                el.onclick = () => {
-                    // Clear all fall intervals for this round's items
-                    itemFallIntervals.forEach(clearInterval);
-                    itemFallIntervals = [];
-                    gameArea.innerHTML = ''; // Remove all items immediately
-
-                    if (isCorrect) {
-                        score++;
-                        scoreBoard.textContent = `Score: ${score}`;
-                        playAudio(mp3);
-                        // Add visual feedback (optional, as items are removed quickly)
-                        // el.classList.add('correct');
-                    } else {
-                        playAudio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3'); // Incorrect sound
-                        // Add visual feedback (optional)
-                         // el.classList.add('incorrect');
-                         // Optional: Penalize score for incorrect catch
-                         // score = Math.max(0, score - 1);
-                         // scoreBoard.textContent = `Score: ${score}`;
-                    }
-
-                    // Move to the next letter after a short delay
-                    setTimeout(() => {
-                        currentLetterIndex++;
-                        runGame();
-                    }, 500); // Short delay to show feedback
-                }
+        // Theme buttons
+        document.querySelectorAll('.theme-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                if (gameRunning) return;
+                currentTheme = button.dataset.theme;
+                document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                applyTheme(currentTheme);
             });
+        });
+    }
+
+
+    function resizeCanvas() {
+        const containerWidth = canvas.parentElement.clientWidth - 30;
+        canvasSize = Math.min(containerWidth, 400);
+        canvas.width = canvasSize;
+        canvas.height = canvasSize;
+        tileCount = Math.floor(canvasSize / gridSize); 
+
+        if (gameRunning) {
+            drawGameElements();
+        } else {
+            const theme = themeSettings[currentTheme];
+            ctx.fillStyle = theme.canvasBg;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = theme.messageText;
+            ctx.font = `${canvasSize / 20}px 'Press Start 2P'`;
+            ctx.textAlign = 'center';
+            ctx.fillText('Press Start!', canvas.width / 2, canvas.height / 2);
+        }
+    }
+
+    function startGame() {
+        // Ensure Tone.js context is started by user gesture
+        if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') {
+            Tone.start().then(setupSounds);
         }
 
-        function endGame() {
-            clearInterval(gameInterval); // Clear the main game interval if used
-            itemFallIntervals.forEach(clearInterval); // Clear any remaining fall intervals
-            itemFallIntervals = [];
-            gameArea.innerHTML = ''; // Clear game area
+        clearInterval(gameLoopInterval);
+        gameRunning = true;
+        document.querySelectorAll('.setting-btn').forEach(btn => btn.disabled = true); // Disable setting buttons during game
 
-            // Check and update best score
-            const currentBestScore = getBestScore();
-            if (score > currentBestScore) {
-                setBestScore(score);
-            }
-
-            // Display final score and updated best score
-            gameScreen.style.display = 'none';
-            endScreen.style.display = 'flex'; // Show end screen
-            finalScore.textContent = `You scored ${score} out of ${maxLettersToPlay}`;
-            displayBestScore(); // Update best score display on end screen
+        // Set speed based on the stored currentDifficulty
+        // This is where the selected difficulty impacts game speed
+        if (currentDifficulty === 'easy') {
+            speed = 200; // Slower
+        } else if (currentDifficulty === 'hard') {
+            speed = 80;  // Faster
+        } else { // 'normal' or default
+            speed = 130; // Medium
         }
 
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
+        dx = gridSize;
+        dy = 0;
+        let startX = Math.floor(tileCount / 2 - 2) * gridSize;
+        let startY = Math.floor(tileCount / 2) * gridSize;
+        startX = Math.max(0, Math.min(startX, (tileCount -1) * gridSize));
+        startY = Math.max(0, Math.min(startY, (tileCount -1) * gridSize));
+        snake = [{ x: startX, y: startY }];
+
+        score = 0;
+        scoreDisplay.textContent = score;
+        letterIndex = 0;
+
+        restartBtn.style.display = 'none';
+        startGameBtn.textContent = 'Restart Game';
+
+        currentLetter = getNextLetter();
+        food = getRandomFood();
+        gameLoopInterval = setInterval(gameLoop, speed); // Game loop uses the speed set above
+    }
+
+    function getNextLetter() {
+      const letter = alphabet[letterIndex % alphabet.length];
+      letterIndex++;
+      return letter;
+    }
+
+    function gameLoop() {
+      if (!gameRunning) return;
+      updateSnakePosition();
+      if (checkGameOver()) {
+        gameOver();
+        return;
+      }
+      checkFoodCollision();
+      drawGameElements();
+    }
+
+    function updateSnakePosition() {
+      const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+      snake.unshift(head);
+    }
+
+    function checkFoodCollision() {
+      if (snake[0].x === food.x && snake[0].y === food.y) {
+        if (eatSynth) eatSynth.triggerAttackRelease('C5', '8n', Tone.now());
+        score++;
+        scoreDisplay.textContent = score;
+        currentLetter = getNextLetter();
+        food = getRandomFood();
+      } else {
+        snake.pop();
+      }
+    }
+
+    function checkGameOver() {
+      const head = snake[0];
+      if (head.x < 0 || head.x >= tileCount * gridSize || head.y < 0 || head.y >= tileCount * gridSize) {
+        return true;
+      }
+      for (let i = 1; i < snake.length; i++) {
+        if (snake[i].x === head.x && snake[i].y === head.y) {
+          return true;
         }
+      }
+      return false;
+    }
 
-        // Optional: Implement a game timer
-        // function startTimer(durationInSeconds) {
-        //     let timer = durationInSeconds;
-        //     const countdown = setInterval(() => {
-        //         const minutes = Math.floor(timer / 60);
-        //         const seconds = timer % 60;
-        //         timerDisplay.textContent = `Time: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-        //
-        //         if (--timer < 0) {
-        //             clearInterval(countdown);
-        //             endGame(); // End game when timer runs out
-        //         }
-        //     }, 1000);
-        //     // Store timer interval if needed for clearing on game end
-        // }
+    function drawGameElements() {
+      const theme = themeSettings[currentTheme];
+      ctx.fillStyle = theme.canvasBg;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    </script>
+      snake.forEach((part, index) => {
+        ctx.fillStyle = index === 0 ? theme.snakeHead : theme.snakeBody;
+        ctx.fillRect(part.x, part.y, gridSize, gridSize);
+        ctx.strokeStyle = theme.canvasBg; 
+        ctx.strokeRect(part.x, part.y, gridSize, gridSize);
+      });
+
+      ctx.font = `${gridSize * 0.8}px 'Press Start 2P'`;
+      ctx.fillStyle = theme.foodText;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(currentLetter, food.x + gridSize / 2, food.y + gridSize / 2 + 2);
+    }
+
+    function getRandomFood() {
+      let newFoodPosition;
+      while (true) {
+          newFoodPosition = {
+            x: Math.floor(Math.random() * tileCount) * gridSize,
+            y: Math.floor(Math.random() * tileCount) * gridSize
+          };
+          let collisionWithSnake = false;
+          for (const part of snake) {
+              if (part.x === newFoodPosition.x && part.y === newFoodPosition.y) {
+                  collisionWithSnake = true;
+                  break;
+              }
+          }
+          if (!collisionWithSnake && (newFoodPosition.x < tileCount*gridSize && newFoodPosition.y < tileCount*gridSize)) break;
+      }
+      return newFoodPosition;
+    }
+
+    function gameOver() {
+      gameRunning = false;
+      clearInterval(gameLoopInterval);
+      if (gameOverSynth) gameOverSynth.triggerAttackRelease('C3', '0.5n', Tone.now());
+      document.querySelectorAll('.setting-btn').forEach(btn => btn.disabled = false); // Re-enable setting buttons
+
+
+      updateBestScore();
+      restartBtn.style.display = 'inline-block';
+      startGameBtn.textContent = 'Start Game';
+
+      const theme = themeSettings[currentTheme];
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.65)'; 
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.font = `${canvasSize / 12}px 'Press Start 2P'`;
+      ctx.fillStyle = theme.gameOverText;
+      ctx.textAlign = 'center';
+      ctx.fillText('GAME OVER!', canvas.width / 2, canvas.height / 2 - canvasSize / 20);
+      ctx.font = `${canvasSize / 20}px 'Press Start 2P'`;
+      ctx.fillStyle = theme.messageText;
+      ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height / 2 + canvasSize / 20);
+    }
+
+    function loadBestScore() {
+      bestScore = parseInt(localStorage.getItem('snakeABCBestScore')) || 0;
+      bestDisplay.textContent = bestScore;
+    }
+
+    function updateBestScore() {
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem('snakeABCBestScore', bestScore);
+        bestDisplay.textContent = bestScore;
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      if (!gameRunning && (e.key.includes('Arrow') || ['w', 'a', 's', 'd'].includes(e.key.toLowerCase()))) return;
+
+      const goingUp = dy === -gridSize;
+      const goingDown = dy === gridSize;
+      const goingLeft = dx === -gridSize;
+      const goingRight = dx === gridSize;
+
+      switch (e.key.toLowerCase()) {
+        case 'arrowup': case 'w': if (!goingDown) { dx = 0; dy = -gridSize; } break;
+        case 'arrowdown': case 's': if (!goingUp) { dx = 0; dy = gridSize; } break;
+        case 'arrowleft': case 'a': if (!goingRight) { dx = -gridSize; dy = 0; } break;
+        case 'arrowright': case 'd': if (!goingLeft) { dx = gridSize; dy = 0; } break;
+        case ' ': if (!gameRunning) { startGame(); } break;
+      }
+    });
+
+    let touchStartX = 0, touchStartY = 0;
+    canvas.addEventListener('touchstart', function(event) {
+        if (!gameRunning) return;
+        touchStartX = event.changedTouches[0].screenX;
+        touchStartY = event.changedTouches[0].screenY;
+        event.preventDefault();
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', function(event) {
+        if (!gameRunning) return;
+        const touchEndX = event.changedTouches[0].screenX;
+        const touchEndY = event.changedTouches[0].screenY;
+        handleSwipe(touchEndX, touchEndY);
+        event.preventDefault();
+    }, { passive: false });
+
+    function handleSwipe(touchEndX, touchEndY) {
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+        const absDeltaX = Math.abs(deltaX);
+        const absDeltaY = Math.abs(deltaY);
+
+        const goingUp = dy === -gridSize;
+        const goingDown = dy === gridSize;
+        const goingLeft = dx === -gridSize;
+        const goingRight = dx === gridSize;
+
+        if (absDeltaX > absDeltaY) {
+            if (deltaX > 0 && !goingLeft) { dx = gridSize; dy = 0; }
+            else if (deltaX < 0 && !goingRight) { dx = -gridSize; dy = 0; }
+        } else if (absDeltaY > absDeltaX) {
+            if (deltaY > 0 && !goingUp) { dx = 0; dy = gridSize; }
+            else if (deltaY < 0 && !goingDown) { dx = 0; dy = -gridSize; }
+        }
+    }
+  </script>
 </body>
 </html>
