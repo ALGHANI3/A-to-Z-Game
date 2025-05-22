@@ -1,4 +1,4 @@
-snake game
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -25,11 +25,11 @@ snake game
       padding: 10px;
       text-align: center;
       transition: background-color 0.5s ease; /* Theme transition */
-      overflow: hidden; /* Prevent scrollbars from minor animation overflows */
+      overflow: hidden; /* Prevent scrollbars from minor animation overflows or layout shifts */
     }
 
     h1 {
-      font-size: 2rem;
+      font-size: 2rem; /* Responsive base */
       margin-bottom: 15px;
       text-shadow: 3px 3px #ff00ff;
       color: #00ffff;
@@ -39,8 +39,8 @@ snake game
       display: flex;
       flex-direction: column;
       align-items: center;
-      width: 100%;
-      max-width: 420px;
+      width: 100%; /* Take full available width */
+      max-width: 420px; /* Max width for larger screens */
       padding: 15px;
       border-radius: 15px;
       border: 3px solid #00ffff;
@@ -108,12 +108,15 @@ snake game
     #gameCanvas {
       border: 2px solid #00ffff;
       border-radius: 8px;
-      width: 100%;
-      height: auto;
-      aspect-ratio: 1 / 1;
-      max-width: 400px;
-      display: block;
-      transition: background-color 0.5s ease, border-color 0.5s ease; /* Theme transition for border */
+      width: 100%; /* Occupy full width of its parent container */
+      max-width: 400px; /* Absolute maximum physical width */
+      max-height: 65vh; /* Max height relative to viewport, good for landscape */
+      height: auto; /* Let aspect-ratio determine height based on width */
+      aspect-ratio: 1 / 1; /* Maintain square shape */
+      display: block; /* Remove extra space below */
+      margin-left: auto; /* Center canvas if constrained by max-width/max-height */
+      margin-right: auto;
+      transition: background-color 0.5s ease, border-color 0.5s ease;
     }
 
     button#startGameBtn, button#restartBtn { /* Target only main game buttons */
@@ -148,9 +151,13 @@ snake game
       transform: translateY(2px);
     }
 
+    /* Responsive adjustments for smaller screens */
     @media (max-width: 480px) {
       h1 {
-        font-size: 1.5rem;
+        font-size: 1.5rem; /* Smaller H1 on small screens */
+      }
+      .game-container {
+        padding: 10px; /* Reduce padding on game container */
       }
       button#startGameBtn, button#restartBtn {
         font-size: 0.9rem;
@@ -166,6 +173,18 @@ snake game
         font-size: 0.7rem;
         padding: 6px 10px;
       }
+    }
+    @media (max-width: 360px) { /* Even smaller screens */
+        h1 {
+            font-size: 1.3rem;
+        }
+        .settings-panel h3 {
+            font-size: 0.75rem;
+        }
+        .setting-btn {
+            font-size: 0.65rem;
+            padding: 5px 8px;
+        }
     }
   </style>
 </head>
@@ -211,9 +230,9 @@ snake game
     const gameContainer = document.querySelector('.game-container');
 
     // Game constants
-    const gridSize = 20;
-    let canvasSize = 400;
-    let tileCount;
+    const gridSize = 20; // Size of each grid cell in the game logic
+    let canvasSize; // Actual pixel size of the canvas (determined by CSS and viewport)
+    let tileCount;  // Number of grid cells that fit into the canvas
 
     // Game state variables
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -246,7 +265,7 @@ snake game
             settingsTitleColor: '#00ffff',
             activeButtonBg: '#00ffff',
             activeButtonColor: '#0a0a23',
-            particleColor: 'rgba(0, 255, 255, 0.5)', // Cyan stars
+            particleColor: 'rgba(0, 255, 255, 0.5)',
             particleSpeedY: 0.5,
             particleSpeedX: 0
         },
@@ -266,9 +285,9 @@ snake game
             settingsTitleColor: '#ADFF2F',
             activeButtonBg: '#ADFF2F',
             activeButtonColor: '#228B22',
-            particleColor: 'rgba(46, 139, 87, 0.7)', // Darker green leaves
+            particleColor: 'rgba(46, 139, 87, 0.7)',
             particleSpeedY: 0.7,
-            particleSpeedX: 0.2 // Slight sideways drift for leaves
+            particleSpeedX: 0.2
         },
         desert: {
             bodyBg: '#F4A460',
@@ -286,9 +305,9 @@ snake game
             settingsTitleColor: '#8B4513',
             activeButtonBg: '#8B4513',
             activeButtonColor: '#FFFFFF',
-            particleColor: 'rgba(210, 180, 140, 0.6)', // Tan sand particles
+            particleColor: 'rgba(210, 180, 140, 0.6)',
             particleSpeedY: 0.3,
-            particleSpeedX: 0.5 // More horizontal movement for sand
+            particleSpeedX: 0.5
         }
     };
 
@@ -306,16 +325,18 @@ snake game
     
     function initParticles() {
         particles = [];
+        if (!canvasSize) return; // Don't init if canvasSize isn't set yet
         for (let i = 0; i < MAX_PARTICLES; i++) {
             particles.push({
                 x: Math.random() * canvasSize,
                 y: Math.random() * canvasSize,
-                size: Math.random() * 3 + 1, // Particle size
+                size: Math.random() * 3 + 1,
             });
         }
     }
 
     function drawAndUpdateParticles() {
+        if (!canvasSize) return; // Don't draw if canvasSize isn't set
         const theme = themeSettings[currentTheme];
         ctx.fillStyle = theme.particleColor;
         particles.forEach(p => {
@@ -323,24 +344,17 @@ snake game
             ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
             ctx.fill();
 
-            // Move particles
-            p.y += theme.particleSpeedY * (p.size / 2) ; // Smaller particles move slower/faster based on theme
+            p.y += theme.particleSpeedY * (p.size / 2) ; 
             p.x += (Math.random() - 0.5) * theme.particleSpeedX;
 
-
-            // Reset particle if it goes off screen
             if (p.y > canvasSize + p.size) {
                 p.y = -p.size;
                 p.x = Math.random() * canvasSize;
             }
-            if (p.x > canvasSize + p.size) {
-                p.x = -p.size;
-            } else if (p.x < -p.size) {
-                p.x = canvasSize + p.size;
-            }
+            if (p.x > canvasSize + p.size) p.x = -p.size;
+            else if (p.x < -p.size) p.x = canvasSize + p.size;
         });
     }
-
 
     function applyTheme(themeName) {
         const theme = themeSettings[themeName];
@@ -358,21 +372,23 @@ snake game
             btn.style.color = theme.activeButtonColor;
         });
         canvas.style.borderColor = theme.borderColor;
-        initParticles(); // Re-initialize particles for the new theme
-
+        // Particles will be re-initialized by resizeCanvas, which is called after applyTheme or if game not running
+        
         if (!gameRunning) {
-            resizeCanvas(); 
+            resizeCanvas(); // This will redraw canvas with new theme and particles
+        } else {
+             initParticles(); // If game is running, just re-init particles for next draw cycle
         }
     }
-
 
     window.onload = () => {
         setupSounds();
         loadBestScore();
-        applyTheme(currentTheme); 
-        resizeCanvas(); // This will also call initParticles via applyTheme if needed
+        // resizeCanvas will be called, which then calls applyTheme elements for the first time
+        resizeCanvas(); // Initial sizing and theme application through its logic
         window.addEventListener('resize', resizeCanvas);
         setupSettingButtons();
+        applyTheme(currentTheme); // Explicitly apply initial theme settings to all elements
     };
 
     function setupSettingButtons() {
@@ -382,7 +398,9 @@ snake game
                 currentDifficulty = button.dataset.difficulty;
                 document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
-                applyTheme(currentTheme); 
+                // Re-apply theme to update active button colors if they depend on theme
+                const activeThemeBtn = document.querySelector('.theme-btn.active');
+                applyTheme(activeThemeBtn ? activeThemeBtn.dataset.theme : currentTheme);
             });
         });
 
@@ -392,29 +410,36 @@ snake game
                 currentTheme = button.dataset.theme;
                 document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
-                applyTheme(currentTheme); // This will re-init particles and redraw canvas
+                applyTheme(currentTheme);
             });
         });
     }
 
-
     function resizeCanvas() {
-        const containerWidth = canvas.parentElement.clientWidth - 30;
-        canvasSize = Math.min(containerWidth, 400);
+        // Get the actual computed size of the canvas element after CSS styling
+        // This considers width:100%, max-width, max-height, aspect-ratio
+        canvasSize = canvas.clientWidth; 
+
+        // Set the internal drawing buffer resolution to match the displayed size
         canvas.width = canvasSize;
         canvas.height = canvasSize;
+
+        // Calculate how many grid cells fit into the new canvas size
         tileCount = Math.floor(canvasSize / gridSize); 
-        initParticles(); // Re-initialize particles on resize to fit new canvas size
+        
+        initParticles(); // Re-initialize particles to fit new canvas size and theme
 
         if (gameRunning) {
-            drawGameElements();
+            drawGameElements(); // If game is running, redraw it with new dimensions
         } else {
-            const theme = themeSettings[currentTheme];
+            // If game is not running, draw the initial "Press Start" message or theme background
+            const theme = themeSettings[currentTheme]; // Ensure theme is current
             ctx.fillStyle = theme.canvasBg;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             drawAndUpdateParticles(); // Draw particles on initial screen
             ctx.fillStyle = theme.messageText;
-            ctx.font = `${canvasSize / 20}px 'Press Start 2P'`;
+            // Ensure font size is not too small, scaled with canvas size
+            ctx.font = `${Math.max(10, Math.floor(canvasSize / 22))}px 'Press Start 2P'`; 
             ctx.textAlign = 'center';
             ctx.fillText('Press Start!', canvas.width / 2, canvas.height / 2);
         }
@@ -435,10 +460,12 @@ snake game
 
         dx = gridSize;
         dy = 0;
+        // Ensure snake starts within the potentially smaller tileCount & on the grid
         let startX = Math.floor(tileCount / 2 - 2) * gridSize;
         let startY = Math.floor(tileCount / 2) * gridSize;
-        startX = Math.max(0, Math.min(startX, (tileCount -1) * gridSize));
-        startY = Math.max(0, Math.min(startY, (tileCount -1) * gridSize));
+        startX = Math.max(0, Math.min(startX, (tileCount - 1) * gridSize));
+        startY = Math.max(0, Math.min(startY, (tileCount - 1) * gridSize));
+
         snake = [{ x: startX, y: startY }];
 
         score = 0;
@@ -450,7 +477,7 @@ snake game
 
         currentLetter = getNextLetter();
         food = getRandomFood();
-        initParticles(); // Ensure particles are set for the game start
+        // Particles should be initialized by resizeCanvas or applyTheme already
         gameLoopInterval = setInterval(gameLoop, speed);
     }
 
@@ -490,9 +517,11 @@ snake game
 
     function checkGameOver() {
       const head = snake[0];
+      // Check wall collision based on the actual game grid area
       if (head.x < 0 || head.x >= tileCount * gridSize || head.y < 0 || head.y >= tileCount * gridSize) {
         return true;
       }
+      // Check self-collision
       for (let i = 1; i < snake.length; i++) {
         if (snake[i].x === head.x && snake[i].y === head.y) {
           return true;
@@ -503,8 +532,8 @@ snake game
 
     function drawSnakeEyes(head, theme) {
         ctx.fillStyle = theme.snakeEyes;
-        const eyeSize = gridSize / 5;
-        const eyeOffset = gridSize / 4;
+        const eyeSize = Math.max(2, gridSize / 5); // Ensure eyes are visible
+        const eyeOffset = Math.max(2, gridSize / 4);
 
         if (dx > 0) { // Moving Right
             ctx.fillRect(head.x + gridSize - eyeOffset - eyeSize, head.y + eyeOffset, eyeSize, eyeSize);
@@ -523,17 +552,15 @@ snake game
 
     function drawGameElements() {
       const theme = themeSettings[currentTheme];
-      // Draw background color
       ctx.fillStyle = theme.canvasBg;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw and update animated particles
       drawAndUpdateParticles();
 
-      // Draw snake
       snake.forEach((part, index) => {
         ctx.fillStyle = index === 0 ? theme.snakeHead : theme.snakeBody;
         ctx.fillRect(part.x, part.y, gridSize, gridSize);
+        // Stroke for slight separation, using canvas background for subtlety
         ctx.strokeStyle = theme.canvasBg; 
         ctx.strokeRect(part.x, part.y, gridSize, gridSize);
         if (index === 0) {
@@ -541,33 +568,39 @@ snake game
         }
       });
 
-      // Draw food (letter)
-      ctx.font = `${gridSize * 0.8}px 'Press Start 2P'`;
+      ctx.font = `${Math.max(8, Math.floor(gridSize * 0.8))}px 'Press Start 2P'`; // Ensure food letter is visible
       ctx.fillStyle = theme.foodText;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      // Small shadow/outline for food text for better readability on varied backgrounds
-      ctx.strokeStyle = theme.canvasBg; // Use canvas background for subtle outline
-      ctx.lineWidth = 2;
-      ctx.strokeText(currentLetter, food.x + gridSize / 2, food.y + gridSize / 2 + 2);
-      ctx.fillText(currentLetter, food.x + gridSize / 2, food.y + gridSize / 2 + 2);
+      ctx.strokeStyle = theme.canvasBg; 
+      ctx.lineWidth = 2; // Adjust outline thickness as needed
+      ctx.strokeText(currentLetter, food.x + gridSize / 2, food.y + gridSize / 2 + Math.floor(gridSize/10)); // Minor y-offset for better centering
+      ctx.fillText(currentLetter, food.x + gridSize / 2, food.y + gridSize / 2 + Math.floor(gridSize/10));
     }
 
     function getRandomFood() {
       let newFoodPosition;
+      // Ensure tileCount is valid before trying to place food
+      if (tileCount <= 0) { 
+          console.error("tileCount is invalid, cannot place food.");
+          // Default to a safe off-screen position or handle error appropriately
+          return {x: -gridSize, y: -gridSize}; 
+      }
       while (true) {
           newFoodPosition = {
             x: Math.floor(Math.random() * tileCount) * gridSize,
             y: Math.floor(Math.random() * tileCount) * gridSize
           };
           let collisionWithSnake = false;
-          for (const part of snake) {
-              if (part.x === newFoodPosition.x && part.y === newFoodPosition.y) {
-                  collisionWithSnake = true;
-                  break;
-              }
+          if(snake) { // Ensure snake exists before checking collision
+            for (const part of snake) {
+                if (part.x === newFoodPosition.x && part.y === newFoodPosition.y) {
+                    collisionWithSnake = true;
+                    break;
+                }
+            }
           }
-          // Ensure food is within the visible grid
+          // Ensure food is within the visible grid defined by tileCount * gridSize
           if (!collisionWithSnake && 
               newFoodPosition.x >= 0 && newFoodPosition.x < tileCount * gridSize &&
               newFoodPosition.y >= 0 && newFoodPosition.y < tileCount * gridSize) {
@@ -583,7 +616,6 @@ snake game
       if (gameOverSynth) gameOverSynth.triggerAttackRelease('C3', '0.5n', Tone.now());
       document.querySelectorAll('.setting-btn').forEach(btn => btn.disabled = false);
 
-
       updateBestScore();
       restartBtn.style.display = 'inline-block';
       startGameBtn.textContent = 'Start Game';
@@ -591,15 +623,14 @@ snake game
       const theme = themeSettings[currentTheme];
       ctx.fillStyle = 'rgba(0, 0, 0, 0.65)'; 
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      // Redraw particles on game over screen for continuity
       drawAndUpdateParticles(); 
-      ctx.font = `${canvasSize / 12}px 'Press Start 2P'`;
+      ctx.font = `${Math.max(12, Math.floor(canvasSize / 12))}px 'Press Start 2P'`;
       ctx.fillStyle = theme.gameOverText;
       ctx.textAlign = 'center';
-      ctx.fillText('GAME OVER!', canvas.width / 2, canvas.height / 2 - canvasSize / 20);
-      ctx.font = `${canvasSize / 20}px 'Press Start 2P'`;
+      ctx.fillText('GAME OVER!', canvas.width / 2, canvas.height / 2 - Math.floor(canvasSize / 20));
+      ctx.font = `${Math.max(10, Math.floor(canvasSize / 22))}px 'Press Start 2P'`;
       ctx.fillStyle = theme.messageText;
-      ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height / 2 + canvasSize / 20);
+      ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height / 2 + Math.floor(canvasSize / 20));
     }
 
     function loadBestScore() {
@@ -659,10 +690,10 @@ snake game
         const goingLeft = dx === -gridSize;
         const goingRight = dx === gridSize;
 
-        if (absDeltaX > absDeltaY) {
+        if (absDeltaX > absDeltaY) { // Horizontal swipe
             if (deltaX > 0 && !goingLeft) { dx = gridSize; dy = 0; }
             else if (deltaX < 0 && !goingRight) { dx = -gridSize; dy = 0; }
-        } else if (absDeltaY > absDeltaX) {
+        } else if (absDeltaY > absDeltaX) { // Vertical swipe
             if (deltaY > 0 && !goingUp) { dx = 0; dy = gridSize; }
             else if (deltaY < 0 && !goingDown) { dx = 0; dy = -gridSize; }
         }
