@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+snake game
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -25,6 +25,7 @@
       padding: 10px;
       text-align: center;
       transition: background-color 0.5s ease; /* Theme transition */
+      overflow: hidden; /* Prevent scrollbars from minor animation overflows */
     }
 
     h1 {
@@ -112,7 +113,7 @@
       aspect-ratio: 1 / 1;
       max-width: 400px;
       display: block;
-      transition: background-color 0.5s ease; /* Theme transition */
+      transition: background-color 0.5s ease, border-color 0.5s ease; /* Theme transition for border */
     }
 
     button#startGameBtn, button#restartBtn { /* Target only main game buttons */
@@ -219,8 +220,13 @@
     let letterIndex = 0;
     let snake, food, dx, dy, score, bestScore, speed, gameLoopInterval, currentLetter;
     let gameRunning = false;
-    let currentDifficulty = 'normal'; // Default difficulty
-    let currentTheme = 'default';     // Default theme
+    let currentDifficulty = 'normal';
+    let currentTheme = 'default';
+
+    // Background animation particles
+    let particles = [];
+    const MAX_PARTICLES = 30;
+
 
     // Theme settings
     const themeSettings = {
@@ -230,6 +236,7 @@
             canvasBg: '#001f3f',
             snakeHead: '#00ff00',
             snakeBody: '#00cc00',
+            snakeEyes: '#ffffff',
             foodText: '#ffffff',
             messageText: '#ffffff',
             gameOverText: '#ff0000',
@@ -238,7 +245,10 @@
             h1Shadow: '#ff00ff',
             settingsTitleColor: '#00ffff',
             activeButtonBg: '#00ffff',
-            activeButtonColor: '#0a0a23'
+            activeButtonColor: '#0a0a23',
+            particleColor: 'rgba(0, 255, 255, 0.5)', // Cyan stars
+            particleSpeedY: 0.5,
+            particleSpeedX: 0
         },
         jungle: {
             bodyBg: '#228B22',
@@ -246,6 +256,7 @@
             canvasBg: '#8FBC8F',
             snakeHead: '#FFD700',
             snakeBody: '#DAA520',
+            snakeEyes: '#000000',
             foodText: '#1A1A1A',
             messageText: '#1A1A1A',
             gameOverText: '#8B0000',
@@ -254,7 +265,10 @@
             h1Shadow: '#228B22',
             settingsTitleColor: '#ADFF2F',
             activeButtonBg: '#ADFF2F',
-            activeButtonColor: '#228B22'
+            activeButtonColor: '#228B22',
+            particleColor: 'rgba(46, 139, 87, 0.7)', // Darker green leaves
+            particleSpeedY: 0.7,
+            particleSpeedX: 0.2 // Slight sideways drift for leaves
         },
         desert: {
             bodyBg: '#F4A460',
@@ -262,6 +276,7 @@
             canvasBg: '#DEB887',
             snakeHead: '#8B4513',
             snakeBody: '#A0522D',
+            snakeEyes: '#FFFFFF',
             foodText: '#000000',
             messageText: '#000000',
             gameOverText: '#8B0000',
@@ -270,7 +285,10 @@
             h1Shadow: '#D2691E',
             settingsTitleColor: '#8B4513',
             activeButtonBg: '#8B4513',
-            activeButtonColor: '#FFFFFF'
+            activeButtonColor: '#FFFFFF',
+            particleColor: 'rgba(210, 180, 140, 0.6)', // Tan sand particles
+            particleSpeedY: 0.3,
+            particleSpeedX: 0.5 // More horizontal movement for sand
         }
     };
 
@@ -285,6 +303,44 @@
             console.warn("Tone.js not loaded.");
         }
     }
+    
+    function initParticles() {
+        particles = [];
+        for (let i = 0; i < MAX_PARTICLES; i++) {
+            particles.push({
+                x: Math.random() * canvasSize,
+                y: Math.random() * canvasSize,
+                size: Math.random() * 3 + 1, // Particle size
+            });
+        }
+    }
+
+    function drawAndUpdateParticles() {
+        const theme = themeSettings[currentTheme];
+        ctx.fillStyle = theme.particleColor;
+        particles.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Move particles
+            p.y += theme.particleSpeedY * (p.size / 2) ; // Smaller particles move slower/faster based on theme
+            p.x += (Math.random() - 0.5) * theme.particleSpeedX;
+
+
+            // Reset particle if it goes off screen
+            if (p.y > canvasSize + p.size) {
+                p.y = -p.size;
+                p.x = Math.random() * canvasSize;
+            }
+            if (p.x > canvasSize + p.size) {
+                p.x = -p.size;
+            } else if (p.x < -p.size) {
+                p.x = canvasSize + p.size;
+            }
+        });
+    }
+
 
     function applyTheme(themeName) {
         const theme = themeSettings[themeName];
@@ -302,7 +358,7 @@
             btn.style.color = theme.activeButtonColor;
         });
         canvas.style.borderColor = theme.borderColor;
-
+        initParticles(); // Re-initialize particles for the new theme
 
         if (!gameRunning) {
             resizeCanvas(); 
@@ -314,31 +370,29 @@
         setupSounds();
         loadBestScore();
         applyTheme(currentTheme); 
-        resizeCanvas();
+        resizeCanvas(); // This will also call initParticles via applyTheme if needed
         window.addEventListener('resize', resizeCanvas);
         setupSettingButtons();
     };
 
     function setupSettingButtons() {
-        // Difficulty buttons
         document.querySelectorAll('.difficulty-btn').forEach(button => {
             button.addEventListener('click', () => {
                 if (gameRunning) return; 
-                currentDifficulty = button.dataset.difficulty; // Store selected difficulty
+                currentDifficulty = button.dataset.difficulty;
                 document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
                 applyTheme(currentTheme); 
             });
         });
 
-        // Theme buttons
         document.querySelectorAll('.theme-btn').forEach(button => {
             button.addEventListener('click', () => {
                 if (gameRunning) return;
                 currentTheme = button.dataset.theme;
                 document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
-                applyTheme(currentTheme);
+                applyTheme(currentTheme); // This will re-init particles and redraw canvas
             });
         });
     }
@@ -350,6 +404,7 @@
         canvas.width = canvasSize;
         canvas.height = canvasSize;
         tileCount = Math.floor(canvasSize / gridSize); 
+        initParticles(); // Re-initialize particles on resize to fit new canvas size
 
         if (gameRunning) {
             drawGameElements();
@@ -357,6 +412,7 @@
             const theme = themeSettings[currentTheme];
             ctx.fillStyle = theme.canvasBg;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            drawAndUpdateParticles(); // Draw particles on initial screen
             ctx.fillStyle = theme.messageText;
             ctx.font = `${canvasSize / 20}px 'Press Start 2P'`;
             ctx.textAlign = 'center';
@@ -365,24 +421,17 @@
     }
 
     function startGame() {
-        // Ensure Tone.js context is started by user gesture
         if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') {
             Tone.start().then(setupSounds);
         }
 
         clearInterval(gameLoopInterval);
         gameRunning = true;
-        document.querySelectorAll('.setting-btn').forEach(btn => btn.disabled = true); // Disable setting buttons during game
+        document.querySelectorAll('.setting-btn').forEach(btn => btn.disabled = true);
 
-        // Set speed based on the stored currentDifficulty
-        // This is where the selected difficulty impacts game speed
-        if (currentDifficulty === 'easy') {
-            speed = 200; // Slower
-        } else if (currentDifficulty === 'hard') {
-            speed = 80;  // Faster
-        } else { // 'normal' or default
-            speed = 130; // Medium
-        }
+        if (currentDifficulty === 'easy') speed = 200;
+        else if (currentDifficulty === 'hard') speed = 80;
+        else speed = 130;
 
         dx = gridSize;
         dy = 0;
@@ -401,7 +450,8 @@
 
         currentLetter = getNextLetter();
         food = getRandomFood();
-        gameLoopInterval = setInterval(gameLoop, speed); // Game loop uses the speed set above
+        initParticles(); // Ensure particles are set for the game start
+        gameLoopInterval = setInterval(gameLoop, speed);
     }
 
     function getNextLetter() {
@@ -451,22 +501,55 @@
       return false;
     }
 
+    function drawSnakeEyes(head, theme) {
+        ctx.fillStyle = theme.snakeEyes;
+        const eyeSize = gridSize / 5;
+        const eyeOffset = gridSize / 4;
+
+        if (dx > 0) { // Moving Right
+            ctx.fillRect(head.x + gridSize - eyeOffset - eyeSize, head.y + eyeOffset, eyeSize, eyeSize);
+            ctx.fillRect(head.x + gridSize - eyeOffset - eyeSize, head.y + gridSize - eyeOffset - eyeSize, eyeSize, eyeSize);
+        } else if (dx < 0) { // Moving Left
+            ctx.fillRect(head.x + eyeOffset, head.y + eyeOffset, eyeSize, eyeSize);
+            ctx.fillRect(head.x + eyeOffset, head.y + gridSize - eyeOffset - eyeSize, eyeSize, eyeSize);
+        } else if (dy > 0) { // Moving Down
+            ctx.fillRect(head.x + eyeOffset, head.y + gridSize - eyeOffset - eyeSize, eyeSize, eyeSize);
+            ctx.fillRect(head.x + gridSize - eyeOffset - eyeSize, head.y + gridSize - eyeOffset - eyeSize, eyeSize, eyeSize);
+        } else if (dy < 0) { // Moving Up
+            ctx.fillRect(head.x + eyeOffset, head.y + eyeOffset, eyeSize, eyeSize);
+            ctx.fillRect(head.x + gridSize - eyeOffset - eyeSize, head.y + eyeOffset, eyeSize, eyeSize);
+        }
+    }
+
     function drawGameElements() {
       const theme = themeSettings[currentTheme];
+      // Draw background color
       ctx.fillStyle = theme.canvasBg;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      // Draw and update animated particles
+      drawAndUpdateParticles();
+
+      // Draw snake
       snake.forEach((part, index) => {
         ctx.fillStyle = index === 0 ? theme.snakeHead : theme.snakeBody;
         ctx.fillRect(part.x, part.y, gridSize, gridSize);
         ctx.strokeStyle = theme.canvasBg; 
         ctx.strokeRect(part.x, part.y, gridSize, gridSize);
+        if (index === 0) {
+            drawSnakeEyes(part, theme);
+        }
       });
 
+      // Draw food (letter)
       ctx.font = `${gridSize * 0.8}px 'Press Start 2P'`;
       ctx.fillStyle = theme.foodText;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
+      // Small shadow/outline for food text for better readability on varied backgrounds
+      ctx.strokeStyle = theme.canvasBg; // Use canvas background for subtle outline
+      ctx.lineWidth = 2;
+      ctx.strokeText(currentLetter, food.x + gridSize / 2, food.y + gridSize / 2 + 2);
       ctx.fillText(currentLetter, food.x + gridSize / 2, food.y + gridSize / 2 + 2);
     }
 
@@ -484,7 +567,12 @@
                   break;
               }
           }
-          if (!collisionWithSnake && (newFoodPosition.x < tileCount*gridSize && newFoodPosition.y < tileCount*gridSize)) break;
+          // Ensure food is within the visible grid
+          if (!collisionWithSnake && 
+              newFoodPosition.x >= 0 && newFoodPosition.x < tileCount * gridSize &&
+              newFoodPosition.y >= 0 && newFoodPosition.y < tileCount * gridSize) {
+            break;
+          }
       }
       return newFoodPosition;
     }
@@ -493,7 +581,7 @@
       gameRunning = false;
       clearInterval(gameLoopInterval);
       if (gameOverSynth) gameOverSynth.triggerAttackRelease('C3', '0.5n', Tone.now());
-      document.querySelectorAll('.setting-btn').forEach(btn => btn.disabled = false); // Re-enable setting buttons
+      document.querySelectorAll('.setting-btn').forEach(btn => btn.disabled = false);
 
 
       updateBestScore();
@@ -503,6 +591,8 @@
       const theme = themeSettings[currentTheme];
       ctx.fillStyle = 'rgba(0, 0, 0, 0.65)'; 
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Redraw particles on game over screen for continuity
+      drawAndUpdateParticles(); 
       ctx.font = `${canvasSize / 12}px 'Press Start 2P'`;
       ctx.fillStyle = theme.gameOverText;
       ctx.textAlign = 'center';
